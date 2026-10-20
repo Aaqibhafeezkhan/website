@@ -72,6 +72,10 @@
       </div>
 
       <div id="pointFields" hidden>
+        <p><strong>Point mode needs host setup too.</strong> Add yourname.got-a.page to your
+        own host before the PR merges, then copy its recommended DNS target below.
+        GitHub Pages needs your website repo's Pages custom-domain setting, not a CNAME
+        file in the claim repo. <a href="/docs#hosts">Host setup instructions</a>.</p>
         <div class="field">
           <label for="target">Where's your site hosted?</label>
           <select id="hostKind">
@@ -96,13 +100,22 @@
     <div id="step2" hidden>
       <p class="step">Here's your file - already copied into the GitHub link below:</p>
       <pre id="jsonOut"></pre>
-      <p class="step">Last step: open GitHub and propose it</p>
+      <p class="step">Next: open GitHub and propose it</p>
       <p>The button opens the claim repo with your file ready to go. GitHub will ask you to
       fork (one click), then you choose <strong>"Propose changes"</strong> and open the pull
-      request. Our checker takes it from there.</p>
+      request. Follow the validation checks; fork PRs do not get automatic bot comments.</p>
       <p style="margin-top:1.2rem">
         <a class="btn" id="ghLink" href="#" target="_blank" rel="noopener">Open GitHub with my file</a>
       </p>
+      <div id="pointNextSteps" class="card" hidden style="margin-top:1.2rem">
+        <h3>Point mode: finish connecting your host</h3>
+        <p>Before merge, add <strong id="hostDomain"></strong> to your own hosting account
+        and confirm the claim's DNS target matches its recommendation.
+        <a href="/docs#hosts">GitHub Pages, Vercel, Netlify and Cloudflare Pages steps</a>.</p>
+        <p><strong>After your PR merges:</strong> wait for DNS sync, return to your host's
+        domain settings, and wait for its HTTPS certificate. Then test your address.
+        DNS alone is not enough; certificate issuance can take a while.</p>
+      </div>
       <p class="hint" style="margin-top:1rem">Everything in the repo is public - that's how
       the pages stay free and community-run.</p>
     </div>
@@ -164,6 +177,8 @@ document.getElementById("claimForm").addEventListener("submit", (e) => {
   const url = "https://github.com/got-a-page/claim/new/main/pages?filename="
     + encodeURIComponent(name + ".json") + "&value=" + encodeURIComponent(text);
   document.getElementById("ghLink").href = url;
+  document.getElementById("pointNextSteps").hidden = json.mode !== "point";
+  document.getElementById("hostDomain").textContent = name + ".got-a.page";
   document.getElementById("step2").hidden = false;
   document.getElementById("step2").scrollIntoView({ behavior: "smooth" });
 });
