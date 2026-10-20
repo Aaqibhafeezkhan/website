@@ -16,7 +16,8 @@ background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:a
 a{color:var(--accent)}
 .wrap{max-width:64rem;margin:0 auto;padding:0 1.25rem}
 nav{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 0}
-.brand{font-weight:800;font-size:1.15rem;color:var(--text);text-decoration:none}
+.brand{display:inline-flex;align-items:center;gap:.45rem;font-weight:800;font-size:1.15rem;color:var(--text);text-decoration:none}
+.brand img{display:block;width:1.5rem;height:1.5rem}
 .brand span{color:var(--accent)}
 nav .links a{margin-left:1.2rem;text-decoration:none;color:var(--muted);font-size:.95rem}
 nav .links a:hover{color:var(--accent)}
