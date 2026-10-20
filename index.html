@@ -36,7 +36,7 @@
     </form>
     <p id="result" role="status" aria-live="polite"></p>
 
-    <div class="counter"><strong id="count">-</strong> pages already claimed. Yours next?</div>
+    <div class="counter"><strong id="count">...</strong> pages already claimed. Yours next?</div>
   </header>
 
   <section id="how">
@@ -107,7 +107,22 @@ let indexPromise = null;
 
 function loadIndex() {
   if (!indexPromise) {
-    indexPromise = fetch(INDEX_URL).then(r => r.ok ? r.json() : { pages: {} }).catch(() => ({ pages: {} }));
+    indexPromise = fetch(INDEX_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) })
+      .then(r => {
+        if (!r.ok) throw new Error("Index unavailable");
+        return r.json();
+      }).then(index => {
+        if (index.availabilityVersion !== 1 || !Array.isArray(index.claimed) ||
+            !Array.isArray(index.reserved) ||
+            !index.claimed.every(name => typeof name === "string") ||
+            !index.reserved.every(name => typeof name === "string")) {
+          throw new Error("Availability data unavailable");
+        }
+        return index;
+      }).catch(error => {
+        indexPromise = null; // Allow another attempt after a temporary failure.
+        throw error;
+      });
   }
   return indexPromise;
 }
@@ -118,21 +133,33 @@ const result = document.getElementById("result");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name = input.value.trim().toLowerCase();
+  const name = input.value.trim().toLowerCase().replace(/\.got-a\.page\.?$/, "");
+  input.value = name;
   result.className = "";
   if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(name) || name.length < 2 || name.length > 40) {
     result.textContent = "2-40 characters: lowercase letters, numbers and hyphens, no hyphens at the edges.";
     return;
   }
   result.textContent = "Checking...";
-  const index = await loadIndex();
-  if (index.pages && index.pages[name]) {
+  let index;
+  try {
+    index = await loadIndex();
+  } catch {
+    result.textContent = "Availability could not be checked. Please try again shortly.";
+    return;
+  }
+  // Ignore a response for an input the visitor changed while we were waiting.
+  if (input.value.trim().toLowerCase().replace(/\.got-a\.page\.?$/, "") !== name) return;
+  if (index.claimed.includes(name)) {
     result.className = "taken";
     result.innerHTML = "";
     const a = document.createElement("a");
     a.href = "https://" + name + ".got-a.page";
     a.textContent = name + ".got-a.page";
     result.append("Aw, taken - visit ", a, " or try another name.");
+  } else if (index.reserved.includes(name)) {
+    result.className = "taken";
+    result.textContent = name + ".got-a.page is reserved. Please try another name.";
   } else {
     result.className = "free";
     result.innerHTML = "";
@@ -143,10 +170,17 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Live counter - cosmetic only, fails quietly.
-fetch(STATS_URL).then(r => r.ok ? r.json() : null).then(s => {
-  if (s && typeof s.totalPages === "number") document.getElementById("count").textContent = s.totalPages;
-}).catch(() => { document.getElementById("count").textContent = "Many"; });
+// Count every claim, including point-mode pages. Never invent a fallback count.
+fetch(STATS_URL, { cache: "no-store", signal: AbortSignal.timeout(8000) })
+  .then(r => {
+    if (!r.ok) throw new Error("Stats unavailable");
+    return r.json();
+  }).then(s => {
+    if (!Number.isSafeInteger(s.totalPages) || s.totalPages < 0) throw new Error("Invalid count");
+    document.getElementById("count").textContent = s.totalPages;
+  }).catch(() => {
+    document.querySelector(".counter").textContent = "Page count temporarily unavailable.";
+  });
 </script>
 </body>
 </html>
