@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>got-a.page - Everyone's got a page</title>
+<meta name="description" content="Claim your free name.got-a.page subdomain. Instant hosted pages or point it at your own site - one small JSON file, one pull request.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="got-a.page - Everyone's got a page">
+<meta property="og:description" content="Free community subdomains for profiles, products, projects and communities.">
+<meta property="og:url" content="https://got-a.page">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/">got-a<span>.</span>page</a>
+    <div class="links">
+      <a href="/docs">Docs</a>
+      <a href="/badges/">Badges</a>
+      <a href="https://github.com/got-a-page/claim">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1>Everyone's got <em>a page</em>.</h1>
+    <p>Claim your free corner of the web - <strong>yourname.got-a.page</strong> - for your profile,
+    product, project or community. One small JSON file, one pull request, done.</p>
+
+    <form class="checker" id="checker">
+      <input id="name" type="text" inputmode="latin" autocomplete="off" spellcheck="false"
+        placeholder="yourname" aria-label="Choose your page name" maxlength="40">
+      <span class="suffix">.got-a.page</span>
+      <button type="submit">Check</button>
+    </form>
+    <p id="result" role="status" aria-live="polite"></p>
+
+    <div class="counter"><strong id="count">-</strong> pages already claimed. Yours next?</div>
+  </header>
+
+  <section id="how">
+    <h2>Two ways to get a page</h2>
+    <p class="sub">Pick the one that fits you. You can switch later.</p>
+    <div class="modes">
+      <div class="card">
+        <span class="tag">Instant</span>
+        <h3>No website? We've got you.</h3>
+        <p>Fill in your name, a tagline and your links. We render a fast, beautiful page -
+        light and dark mode, six themes, nothing to host, nothing to pay.</p>
+        <pre>{
+  "mode": "instant",
+  "owner": { "github": "you" },
+  "page": {
+    "type": "person",
+    "title": "Your Name",
+    "tagline": "What you're about",
+    "theme": "sunrise"
+  }
+}</pre>
+      </div>
+      <div class="card">
+        <span class="tag">Point</span>
+        <h3>Already hosting somewhere?</h3>
+        <p>Point your name at GitHub Pages, Vercel, Netlify, Cloudflare Pages - anywhere.
+        You keep your site; you get a friendlier address for it.</p>
+        <pre>{
+  "mode": "point",
+  "owner": { "github": "you" },
+  "records": {
+    "CNAME": "you.github.io"
+  }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <h2>How claiming works</h2>
+    <p class="sub">About a minute, start to finish.</p>
+    <div class="modes">
+      <div class="card"><h3>1. Write your page file</h3><p>Our <a href="/claim">guided form</a> writes the JSON for you - no hand-editing needed.</p></div>
+      <div class="card"><h3>2. Open a pull request</h3><p>The form drops you into GitHub with everything prefilled. A friendly checker reviews it in seconds.</p></div>
+      <div class="card"><h3>3. You've got a page</h3><p>A maintainer merges, and your page goes live. Share it everywhere - badges included.</p></div>
+    </div>
+  </section>
+
+  <div class="cta-row">
+    <a class="btn" href="/claim">Claim your page</a>
+    <a class="btn ghost" href="/docs">Read the docs</a>
+  </div>
+
+  <footer>
+    <span>got-a.page - a free community service. MIT licensed.</span>
+    <span>
+      <a href="https://github.com/got-a-page/claim/blob/main/TERMS.md">Terms</a> &middot;
+      <a href="https://github.com/got-a-page/claim/blob/main/ABUSE.md">Abuse</a> &middot;
+      <a href="https://github.com/got-a-page">GitHub</a>
+    </span>
+  </footer>
+</div>
+
+<script>
+const INDEX_URL = "https://got-a-page.github.io/claim/index.json";
+const STATS_URL = "https://got-a-page.github.io/claim/stats.json";
+let indexPromise = null;
+
+function loadIndex() {
+  if (!indexPromise) {
+    indexPromise = fetch(INDEX_URL).then(r => r.ok ? r.json() : { pages: {} }).catch(() => ({ pages: {} }));
+  }
+  return indexPromise;
+}
+
+const form = document.getElementById("checker");
+const input = document.getElementById("name");
+const result = document.getElementById("result");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = input.value.trim().toLowerCase();
+  result.className = "";
+  if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(name) || name.length < 2 || name.length > 40) {
+    result.textContent = "2-40 characters: lowercase letters, numbers and hyphens, no hyphens at the edges.";
+    return;
+  }
+  result.textContent = "Checking...";
+  const index = await loadIndex();
+  if (index.pages && index.pages[name]) {
+    result.className = "taken";
+    result.innerHTML = "";
+    const a = document.createElement("a");
+    a.href = "https://" + name + ".got-a.page";
+    a.textContent = name + ".got-a.page";
+    result.append("Aw, taken - visit ", a, " or try another name.");
+  } else {
+    result.className = "free";
+    result.innerHTML = "";
+    const a = document.createElement("a");
+    a.href = "/claim?name=" + encodeURIComponent(name);
+    a.textContent = "Claim it now";
+    result.append(name + ".got-a.page is free! ", a, " before someone else does.");
+  }
+});
+
+// Live counter - cosmetic only, fails quietly.
+fetch(STATS_URL).then(r => r.ok ? r.json() : null).then(s => {
+  if (s && typeof s.totalPages === "number") document.getElementById("count").textContent = s.totalPages;
+}).catch(() => { document.getElementById("count").textContent = "Many"; });
+</script>
+</body>
+</html>

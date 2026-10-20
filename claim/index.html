@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim your page - got-a.page</title>
+<meta name="description" content="The guided claim form: answer a few questions, get your page file, open one pull request.">
+<link rel="stylesheet" href="../styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/">got-a<span>.</span>page</a>
+    <div class="links"><a href="/docs">Docs</a><a href="https://github.com/got-a-page/claim">GitHub</a></div>
+  </nav>
+
+  <section class="doc">
+    <h2>Claim your page</h2>
+    <p class="sub">Answer a few things. We'll write the file for you and open GitHub with
+    everything prefilled - you never touch raw JSON.</p>
+
+    <form id="claimForm" class="card" style="max-width:44rem">
+      <div class="field">
+        <label for="cname">Your page name <span class="hint">- becomes name.got-a.page</span></label>
+        <input id="cname" type="text" required pattern="[a-z0-9]([a-z0-9-]*[a-z0-9])?" minlength="2" maxlength="40"
+          placeholder="e.g. dhanush" autocomplete="off">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="gh">Your GitHub username</label>
+          <input id="gh" type="text" required placeholder="e.g. DhanushNehru" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="mode">Which way?</label>
+          <select id="mode">
+            <option value="instant">Instant - build me a page</option>
+            <option value="point">Point - I have a site already</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="instantFields">
+        <div class="row">
+          <div class="field">
+            <label for="title">Title <span class="hint">- your name or your product's</span></label>
+            <input id="title" type="text" maxlength="80" placeholder="e.g. Dhanush Nehru">
+          </div>
+          <div class="field">
+            <label for="theme">Theme</label>
+            <select id="theme">
+              <option>sunrise</option><option>lagoon</option><option>forest</option>
+              <option>plum</option><option>slate</option><option>ember</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tagline">Tagline <span class="hint">(optional)</span></label>
+          <input id="tagline" type="text" maxlength="160" placeholder="One line about you or it">
+        </div>
+        <div class="field">
+          <label for="links">Links <span class="hint">- one per line, like: GitHub | https://github.com/you</span></label>
+          <textarea id="links" rows="3" placeholder="GitHub | https://github.com/you"></textarea>
+        </div>
+        <div class="field">
+          <label for="about">About <span class="hint">(optional)</span></label>
+          <textarea id="about" rows="2" maxlength="2000" placeholder="A few sentences"></textarea>
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="showcase"> Show my page in the Wall of Pages gallery</label>
+        </div>
+      </div>
+
+      <div id="pointFields" hidden>
+        <div class="field">
+          <label for="target">Where's your site hosted?</label>
+          <select id="hostKind">
+            <option value="cname">A hostname (GitHub Pages, Vercel, Netlify...)</option>
+            <option value="a">An IPv4 address</option>
+            <option value="aaaa">An IPv6 address</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="targetValue">The hostname or address</label>
+          <input id="targetValue" type="text" placeholder="e.g. you.github.io">
+        </div>
+        <div class="field">
+          <label for="purpose">What lives there? <span class="hint">(one line)</span></label>
+          <input id="purpose" type="text" maxlength="200" placeholder="e.g. My portfolio">
+        </div>
+      </div>
+
+      <button class="btn" type="submit" style="border:0;cursor:pointer">Write my page file</button>
+    </form>
+
+    <div id="step2" hidden>
+      <p class="step">Here's your file - already copied into the GitHub link below:</p>
+      <pre id="jsonOut"></pre>
+      <p class="step">Last step: open GitHub and propose it</p>
+      <p>The button opens the claim repo with your file ready to go. GitHub will ask you to
+      fork (one click), then you choose <strong>"Propose changes"</strong> and open the pull
+      request. Our checker takes it from there.</p>
+      <p style="margin-top:1.2rem">
+        <a class="btn" id="ghLink" href="#" target="_blank" rel="noopener">Open GitHub with my file</a>
+      </p>
+      <p class="hint" style="margin-top:1rem">Everything in the repo is public - that's how
+      the pages stay free and community-run.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>got-a.page</span>
+    <span><a href="/docs">Docs</a> &middot; <a href="/">Home</a></span>
+  </footer>
+</div>
+
+<script>
+const mode = document.getElementById("mode");
+const instantFields = document.getElementById("instantFields");
+const pointFields = document.getElementById("pointFields");
+mode.addEventListener("change", () => {
+  instantFields.hidden = mode.value !== "instant";
+  pointFields.hidden = mode.value !== "point";
+});
+
+const params = new URLSearchParams(location.search);
+if (params.get("name")) document.getElementById("cname").value = params.get("name");
+
+function buildJson() {
+  const gh = document.getElementById("gh").value.trim();
+  if (mode.value === "instant") {
+    const page = {
+      type: "person",
+      title: document.getElementById("title").value.trim() || document.getElementById("cname").value,
+      theme: document.getElementById("theme").value
+    };
+    const tagline = document.getElementById("tagline").value.trim();
+    if (tagline) page.tagline = tagline;
+    const links = document.getElementById("links").value.split("\n")
+      .map(l => l.split("|").map(s => s.trim())).filter(p => p.length === 2 && p[0] && p[1])
+      .map(p => ({ label: p[0], url: p[1] }));
+    if (links.length) page.links = links;
+    const about = document.getElementById("about").value.trim();
+    if (about) page.sections = [{ heading: "About", text: about }];
+    const out = { mode: "instant", owner: { github: gh }, page };
+    if (document.getElementById("showcase").checked) out.showcase = true;
+    return out;
+  }
+  const kind = document.getElementById("hostKind").value;
+  const value = document.getElementById("targetValue").value.trim();
+  const records = kind === "cname" ? { CNAME: value } : kind === "a" ? { A: [value] } : { AAAA: [value] };
+  const out = { mode: "point", owner: { github: gh }, records };
+  const purpose = document.getElementById("purpose").value.trim();
+  if (purpose) out.purpose = purpose;
+  return out;
+}
+
+document.getElementById("claimForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = document.getElementById("cname").value.trim().toLowerCase();
+  const json = buildJson();
+  const text = JSON.stringify(json, null, 2) + "\n";
+  document.getElementById("jsonOut").textContent = text;
+  const url = "https://github.com/got-a-page/claim/new/main/pages?filename="
+    + encodeURIComponent(name + ".json") + "&value=" + encodeURIComponent(text);
+  document.getElementById("ghLink").href = url;
+  document.getElementById("step2").hidden = false;
+  document.getElementById("step2").scrollIntoView({ behavior: "smooth" });
+});
+</script>
+</body>
+</html>
