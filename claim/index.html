@@ -118,6 +118,7 @@
       <p>The button opens the claim repo with your file ready to go. GitHub will ask you to
       fork (one click), then you choose <strong>"Propose changes"</strong> and open the pull
       request. Follow the validation checks; fork PRs do not get automatic bot comments.</p>
+      <p>When GitHub asks for a title, name your pull request <strong id="prTitleHint">Claim your-name.got-a.page</strong> - it keeps claim PRs easy to scan.</p>
       <p style="margin-top:1.2rem">
         <a class="btn" id="ghLink" href="#" target="_blank" rel="noopener">Open GitHub with my file</a>
       </p>
@@ -143,6 +144,7 @@
       </div>
       <p class="hint" style="margin-top:1rem">Everything in the repo is public - that's how
       the pages stay free and community-run.</p>
+      <p class="hint">Optional last step: <a href="https://github.com/got-a-page/claim">star the repo on GitHub</a> to support the project and help others find got-a.page.</p>
     </div>
   </section>
 
@@ -205,6 +207,7 @@ document.getElementById("claimForm").addEventListener("submit", (e) => {
   document.getElementById("pointNextSteps").hidden = json.mode !== "point";
   document.getElementById("instantNextSteps").hidden = json.mode !== "instant";
   document.getElementById("hostDomain").textContent = name + ".got-a.page";
+  document.getElementById("prTitleHint").textContent = "Claim " + name + ".got-a.page";
   document.getElementById("step2").hidden = false;
   document.getElementById("step2").scrollIntoView({ behavior: "smooth" });
 });
