@@ -31,6 +31,7 @@
       <a href="#point">Point mode</a>
       <a href="#hosts">Connecting your host before merge</a>
       <a href="#after-merge">After your PR merges</a>
+      <a href="#troubleshooting">Troubleshooting</a>
       <a href="#https">HTTPS and the .page domain</a>
       <a href="#rules">The rules</a>
       <a href="#abuse">Reporting abuse</a>
@@ -161,6 +162,25 @@ to become available.</li>
 a valid certificate. <code>.page</code> addresses require HTTPS, so an unfinished
 certificate can prevent the site from opening.</li>
 </ol>
+
+    <h3 id="troubleshooting">"Is it broken?" - troubleshooting</h3>
+<ul>
+<li><strong>A browser certificate or privacy error right after merge (point
+mode):</strong> normal - your host&#39;s certificate is not ready yet. Wait, then
+enable Enforce HTTPS when your host offers it.</li>
+<li><strong>Your old <code>yourname.github.io</code> address shows the same
+error:</strong> expected. GitHub Pages redirects the old address to your custom
+domain as soon as you save it, so both show the certificate error during the
+waiting window, and both recover when the certificate is issued.</li>
+<li><strong>Your address says "unclaimed" (instant mode):</strong> the index has
+not republished yet. Give it a few minutes after merge and hard-refresh.</li>
+<li><strong>The page loads but looks unstyled:</strong> your site is probably
+loading its CSS or JS from the old address or over <code>http://</code>. Use
+relative asset URLs or update your static site generator&#39;s URL/base-path
+setting for the new domain.</li>
+<li><strong>Still stuck after a day?</strong> Open an issue with your page name
+and what you see - real humans read them.</li>
+</ul>
 <p>If a host asks for an extra verification record, copy the exact record name,
 type and value into an issue for maintainers to review. Do not add it at the
 wrong name or combine a CNAME with TXT on the same hostname. The current claim
@@ -196,6 +216,10 @@ hosting account can let someone else claim that hostname.</p>
 
     <h3 id="faq">FAQ</h3>
     <ul>
+      <li><strong>I merged and my page doesn&#39;t load - is it broken?</strong>
+      Almost certainly not. Check the <a href="#troubleshooting">troubleshooting
+      list</a>: point-mode pages wait on DNS and your host&#39;s certificate, and
+      instant pages take a few minutes to publish.</li>
       <li><strong>Is it really free?</strong> Yes. The domain is paid for years ahead and
       everything else runs on free tiers. No ads, no tracking.</li>
       <li><strong>Do I need to star the repo?</strong> No. Star only if you genuinely like it.</li>
