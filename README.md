@@ -1,3 +1,5 @@
+![got-a.page - Everyone's got a page](assets/banner.svg)
+
 # got-a.page website
 
 The landing site at [got-a.page](https://got-a.page) - hero, live availability
