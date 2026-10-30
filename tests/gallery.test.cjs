@@ -1,6 +1,8 @@
 // Run with: node --test tests/gallery.test.cjs (no dependencies).
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { render, showcased, makeCard } = require("../gallery/build.cjs");
 
 const MARKED = "<ul><!-- GALLERY:START --><!-- GALLERY:END --></ul>";
@@ -50,4 +52,40 @@ test("render rejects missing markers and shows an empty state", () => {
 test("running render twice gives the same result", () => {
   const once = render(MARKED, index).html;
   assert.equal(render(once, index).html, once);
+});
+
+// Narrow screens (e.g. 375px): a valid 40-character page name or an unbroken
+// title/tagline must wrap inside its card instead of pushing the page sideways.
+// There is no browser in this repo, so these tests check the CSS rules that
+// prevent the overflow, using the real gallery/style.css.
+const css = fs
+  .readFileSync(path.join(__dirname, "../gallery/style.css"), "utf8")
+  .replace(/\s+/g, " ");
+const rule = (selector) => {
+  const match = css.match(new RegExp("(?:^|[}\\s])" + selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + " \\{([^}]*)\\}"));
+  return match ? match[1] : "";
+};
+
+test("narrow screen: a 40-character name and long unbroken text still make a card", () => {
+  const long = { title: "T".repeat(60), tagline: "g".repeat(90), theme: "plum", showcase: true };
+  const { html, count } = render(MARKED, { pages: { ["a".repeat(40)]: long } });
+  assert.equal(count, 1);
+  assert.ok(html.includes("a".repeat(40) + ".got-a.page"));
+  assert.ok(html.includes("T".repeat(60)) && html.includes("g".repeat(90)));
+});
+
+test("narrow screen: long name, title and tagline wrap inside the card", () => {
+  for (const selector of [".page-card .name", ".page-card h3", ".page-card .tagline"]) {
+    assert.match(css, new RegExp(selector.replace(/[.]/g, "\\.") + "[^{]*\\{[^}]*overflow-wrap: anywhere"),
+      selector + " must use overflow-wrap: anywhere");
+  }
+});
+
+test("narrow screen: grid items may shrink below their content width", () => {
+  assert.match(rule(".wall > li"), /min-width: 0/);
+  assert.match(rule(".page-card"), /min-width: 0/);
+});
+
+test("narrow screen: grid column minimum never exceeds the viewport", () => {
+  assert.match(rule(".wall"), /minmax\(min\(15rem, 100%\), 1fr\)/);
 });
